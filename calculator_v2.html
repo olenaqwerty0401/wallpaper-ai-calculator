@@ -6,7 +6,7 @@
 <title>Калькулятор шпалер</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
- 
+
   :root {
     --bg:       #F7F5F2;
     --surface:  #FFFFFF;
@@ -24,9 +24,9 @@
     --radius:   8px;
     --shadow:   0 1px 4px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.06);
   }
- 
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
   body {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
@@ -34,7 +34,7 @@
     color: var(--text);
     min-height: 100vh;
   }
- 
+
   /* ── Header ── */
   header {
     background: var(--text);
@@ -58,7 +58,7 @@
     color: rgba(255,255,255,.45);
     font-weight: 300;
   }
- 
+
   /* ── Layout ── */
   .layout {
     max-width: 920px;
@@ -71,7 +71,7 @@
   }
   .col-left  { display: flex; flex-direction: column; gap: 16px; }
   .col-right { display: flex; flex-direction: column; gap: 16px; }
- 
+
   /* ── Card ── */
   .card {
     background: var(--surface);
@@ -87,7 +87,7 @@
     color: var(--muted);
     margin-bottom: 14px;
   }
- 
+
   /* ── Form elements ── */
   label.field-label {
     display: block;
@@ -128,12 +128,12 @@
     padding-right: 28px;
   }
   select:focus { outline: none; border-color: var(--accent); }
- 
+
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .iu   { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: end; }
   .iu select { width: 70px; }
   .iu input  { margin-bottom: 0; }
- 
+
   /* ── Wall blocks ── */
   .wall-block {
     background: var(--bg);
@@ -183,7 +183,7 @@
     margin-top: 4px;
   }
   .btn-add:hover { border-color: var(--accent); color: var(--accent); }
- 
+
   /* ── Repeat type tabs ── */
   .tab-group {
     display: grid;
@@ -209,7 +209,7 @@
     border-color: var(--text);
     font-weight: 500;
   }
- 
+
   /* ── Calc button ── */
   .calc-btn {
     width: 100%;
@@ -227,7 +227,7 @@
   }
   .calc-btn:hover { background: #A84B22; }
   .calc-btn:active { transform: scale(.99); }
- 
+
   /* ── Result ── */
   .result-card {
     background: var(--surface);
@@ -239,7 +239,7 @@
     grid-column: 1 / -1;
   }
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
- 
+
   .result-top {
     display: flex;
     align-items: flex-start;
@@ -274,7 +274,7 @@
     font-weight: 500;
     white-space: nowrap;
   }
- 
+
   .walls-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -300,7 +300,7 @@
     font-size: 11px;
     font-weight: 500;
   }
- 
+
   details {
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -331,14 +331,14 @@
     color: var(--text);
     border-top: 1px solid var(--border);
   }
- 
+
   .error {
     color: var(--danger);
     font-size: 12px;
     min-height: 18px;
     padding: 4px 0;
   }
- 
+
   /* ── Mobile ── */
   @media (max-width: 640px) {
     .layout { grid-template-columns: 1fr; }
@@ -348,7 +348,7 @@
 </style>
 </head>
 <body>
- 
+
 <header>
   <div class="logo">🏠</div>
   <div>
@@ -356,11 +356,11 @@
     <span>Straight Match · Half Drop · конвертація одиниць</span>
   </div>
 </header>
- 
+
 <div class="layout">
   <!-- LEFT: walls + roll params -->
   <div class="col-left">
- 
+
     <div class="card">
       <div class="card-title">Стінки</div>
       <div id="wallsContainer"></div>
@@ -369,7 +369,7 @@
         Додати стінку
       </button>
     </div>
- 
+
     <div class="card">
       <div class="card-title">Параметри рулону</div>
       <div class="row2">
@@ -397,12 +397,12 @@
         </div>
       </div>
     </div>
- 
+
   </div>
- 
+
   <!-- RIGHT: repeat + button -->
   <div class="col-right">
- 
+
     <div class="card">
       <div class="card-title">Репіт (раппорт)</div>
       <div class="tab-group">
@@ -418,17 +418,17 @@
         </select>
       </div>
     </div>
- 
+
     <div style="margin-top:12px">
       <label class="field-label">Запас на відходи (%)</label>
       <input type="number" id="waste" min="0" max="50" step="1" placeholder="15" value="15">
     </div>
- 
+
     <div class="error" id="error"></div>
     <button class="calc-btn" onclick="runCalc()">Розрахувати</button>
- 
+
   </div>
- 
+
   <!-- RESULT — full width -->
   <div class="result-card" id="result">
     <div class="result-top">
@@ -442,22 +442,22 @@
       </div>
       <div id="typeBadge" class="result-badge"></div>
     </div>
- 
+
     <div class="walls-grid" id="wallsGrid"></div>
- 
+
     <details>
       <summary>Детальний розкрій</summary>
       <pre id="detailPre"></pre>
     </details>
   </div>
- 
+
 </div>
- 
+
 <script>
 var wallCount = 0;
 var wallIds   = [];
 var repeatType = 'straight';
- 
+
 function toIn(v, unit) {
   if (unit==='in') return v;
   if (unit==='ft') return v*12;
@@ -474,13 +474,13 @@ function fromIn(v, unit) {
 }
 function r1(v){ return Math.round(v*10)/10; }
 function r2(v){ return Math.round(v*100)/100; }
- 
+
 function setRepeatType(t) {
   repeatType = t;
   document.getElementById('tab-straight').classList.toggle('active', t==='straight');
   document.getElementById('tab-halfdrop').classList.toggle('active', t==='halfdrop');
 }
- 
+
 function addWall() {
   wallCount++;
   var id = wallCount;
@@ -517,13 +517,13 @@ function addWall() {
     '</div>';
   document.getElementById('wallsContainer').appendChild(div);
 }
- 
+
 function removeWall(id) {
   var el = document.getElementById('wall-'+id);
   if (el) el.remove();
   wallIds = wallIds.filter(function(x){return x!==id;});
 }
- 
+
 function convertField(inputId, sel) {
   var inp  = document.getElementById(inputId);
   var val  = parseFloat(inp.value);
@@ -532,32 +532,32 @@ function convertField(inputId, sel) {
   if (val && prev && prev!==next) inp.value = r2(fromIn(toIn(val,prev),next));
   sel.dataset.prev = next;
 }
- 
+
 function plural(n,one,few,many){
   var m=n%10,c=n%100;
   if(m===1&&c!==11) return one;
   if(m>=2&&m<=4&&(c<10||c>=20)) return few;
   return many;
 }
- 
+
 function runCalc() {
   document.getElementById('error').textContent = '';
   document.getElementById('result').style.display = 'none';
- 
+
   var rwRaw = parseFloat(document.getElementById('rollWidth').value);
   var rlRaw = parseFloat(document.getElementById('rollLength').value);
   if (!rwRaw||!rlRaw) { document.getElementById('error').textContent='Вкажіть параметри рулону.'; return; }
- 
+
   var rollWidth  = toIn(rwRaw,  document.getElementById('rollWidthUnit').value);
   var rollLength = toIn(rlRaw,  document.getElementById('rollLengthUnit').value);
- 
+
   // repeat — власна одиниця виміру
   var repeatRaw  = parseFloat(document.getElementById('repeat').value)||0;
   var repeat     = toIn(repeatRaw, document.getElementById('repeatUnit').value);
- 
+
   var wastePct   = parseFloat(document.getElementById('waste').value)||0;
   if (wastePct < 0 || wastePct > 50) { document.getElementById('error').textContent='Запас має бути від 0 до 50%.'; return; }
- 
+
   var walls=[];
   wallIds.forEach(function(id){
     if (!document.getElementById('wall-'+id)) return;
@@ -569,17 +569,17 @@ function runCalc() {
       walls.push({index:id, width:toIn(parseFloat(wRaw),wUnit), height:toIn(parseFloat(hRaw),hUnit),
                   wRaw:wRaw, hRaw:hRaw, wUnit:wUnit, hUnit:hUnit});
   });
- 
+
   if (!walls.length) { document.getElementById('error').textContent='Додайте хоча б одну стінку.'; return; }
- 
+
   var res = repeatType==='straight'
     ? calcStraight(walls,rollWidth,rollLength,repeat)
     : calcHalfDrop(walls,rollWidth,rollLength,repeat);
- 
+
   // Застосовуємо waste: ceil(rawRolls * (1 + waste/100))
   var rawRolls   = res.rolls;
   var finalRolls = Math.ceil(rawRolls * (1 + wastePct / 100));
- 
+
   // Walls grid
   var grid='';
   walls.forEach(function(w){
@@ -591,7 +591,7 @@ function runCalc() {
       '<div><span class="strips-tag">'+strips+' смуг</span></div>' +
     '</div>';
   });
- 
+
   document.getElementById('rollsNum').textContent   = finalRolls;
   document.getElementById('rollsLabel').textContent = plural(finalRolls,'рулон','рулони','рулонів');
   document.getElementById('stripsTotal').textContent = res.totalStrips+' смуг всього';
@@ -604,16 +604,16 @@ function runCalc() {
   document.getElementById('detailPre').textContent  = res.details;
   document.getElementById('result').style.display   = 'block';
 }
- 
+
 /* ── STRAIGHT ── */
 function calcStraight(walls,rollWidth,rollLength,repeat){
   var lines=[], totalStrips=0;
   var ppr = repeat>0 ? Math.floor(rollLength/repeat) : null;
- 
+
   lines.push('── Straight Match ──');
   if(repeat>0) lines.push('Патернів у рулоні: floor('+r1(rollLength)+' / '+repeat+') = '+ppr);
   lines.push('');
- 
+
   var allStrips=[];
   walls.forEach(function(w){
     var strips=Math.ceil(w.width/rollWidth);
@@ -625,7 +625,7 @@ function calcStraight(walls,rollWidth,rollLength,repeat){
       lines.push('Стінка '+w.index+': висота '+r1(w.height)+'"  ('+strips+' смуг, без репіту)');
     for(var s=0;s<strips;s++) allStrips.push({wall:w.index,num:s+1,pps:pps,height:w.height});
   });
- 
+
   lines.push(''); lines.push('── Розкрій по рулонах ──');
   var rolls=0,remP=0,remI=0,cur=0,log=[];
   allStrips.forEach(function(s){
@@ -654,7 +654,7 @@ function calcStraight(walls,rollWidth,rollLength,repeat){
   lines.push('Рулонів потрібно: '+rolls);
   return{rolls:rolls,totalStrips:totalStrips,details:lines.join('\n')};
 }
- 
+
 /* ── HALF DROP ── */
 function calcHalfDrop(walls,rollWidth,rollLength,repeat){
   var lines=[],totalStrips=0;
@@ -662,7 +662,7 @@ function calcHalfDrop(walls,rollWidth,rollLength,repeat){
   lines.push('Непарні смуги: висота стінки');
   lines.push('Парні смуги:   висота стінки + '+repeat+'"');
   lines.push('');
- 
+
   var allStrips=[];
   walls.forEach(function(w){
     var strips=Math.ceil(w.width/rollWidth);
@@ -674,13 +674,13 @@ function calcHalfDrop(walls,rollWidth,rollLength,repeat){
       allStrips.push({wall:w.index,num:s+1,gi:gi,isOdd:isOdd,len:len,wallH:w.height});
     }
   });
- 
+
   lines.push('Довжини смуг:');
   allStrips.forEach(function(s){
     lines.push('  #'+s.gi+' (стінка '+s.wall+', смуга '+s.num+'): '+
       r1(s.wallH)+'"'+(s.isOdd?'':' + '+repeat+'"')+' → '+r1(s.len)+'"');
   });
- 
+
   lines.push(''); lines.push('── Розкрій по рулонах ──');
   var rolls=0,rem=0,cur=0,log=[];
   allStrips.forEach(function(s){
@@ -697,7 +697,7 @@ function calcHalfDrop(walls,rollWidth,rollLength,repeat){
   lines.push('Рулонів потрібно: '+rolls);
   return{rolls:rolls,totalStrips:totalStrips,details:lines.join('\n')};
 }
- 
+
 addWall(); addWall(); addWall(); addWall();
 </script>
 </body>
