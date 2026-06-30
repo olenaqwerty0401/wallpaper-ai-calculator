@@ -390,6 +390,7 @@
             <input type="number" id="rollLength" min="0" step="0.1" placeholder="33">
             <select id="rollLengthUnit" data-prev="ft" onchange="convertField('rollLength',this)">
               <option value="ft">фут</option>
+              <option value="yd">ярд</option>
               <option value="in">інч</option>
               <option value="m">метр</option>
             </select>
@@ -461,6 +462,7 @@ var repeatType = 'straight';
 function toIn(v, unit) {
   if (unit==='in') return v;
   if (unit==='ft') return v*12;
+  if (unit==='yd') return v*36;
   if (unit==='cm') return v/2.54;
   if (unit==='m')  return v*39.3701;
   return v;
@@ -468,6 +470,7 @@ function toIn(v, unit) {
 function fromIn(v, unit) {
   if (unit==='in') return v;
   if (unit==='ft') return v/12;
+  if (unit==='yd') return v/36;
   if (unit==='cm') return v*2.54;
   if (unit==='m')  return v/39.3701;
   return v;
