@@ -96,7 +96,8 @@
     margin-bottom: 4px;
     font-weight: 400;
   }
-  input[type=number] {
+  input[type=number],
+  input[type=url] {
     width: 100%;
     padding: 8px 10px;
     border: 1px solid var(--border);
@@ -107,7 +108,8 @@
     color: var(--text);
     transition: border-color .15s;
   }
-  input[type=number]:focus {
+  input[type=number]:focus,
+  input[type=url]:focus {
     outline: none;
     border-color: var(--accent);
     background: #fff;
@@ -371,6 +373,26 @@
     </div>
 
     <div class="card">
+      <div class="card-title">Автоматичне завантаження параметрів</div>
+      <label class="field-label">Посилання на шпалери</label>
+      <input
+        type="url"
+        id="productUrl"
+        placeholder="https://www.yorkwallcoverings.com/..."
+      >
+      <button
+        class="calc-btn"
+        style="margin-top:10px"
+        id="loadProductBtn"
+        onclick="loadWallpaperProduct()"
+      >
+        Отримати параметри
+      </button>
+      <div class="error" id="productError"></div>
+      <div id="productStatus" style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5"></div>
+    </div>
+
+    <div class="card">
       <div class="card-title">Параметри рулону</div>
       <div class="row2">
         <div>
@@ -458,6 +480,268 @@
 var wallCount = 0;
 var wallIds   = [];
 var repeatType = 'straight';
+
+var N8N_WEBHOOK = 'https://wallpaper-proxy-production.up.railway.app/fetch';
+
+function extractMetaDescription(html) {
+  var m = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([\s\S]*?)["'][^>]*>/i);
+  if (!m) {
+    m = html.match(/<meta[^>]+content=["']([\s\S]*?)["'][^>]+name=["']description["'][^>]*>/i);
+  }
+  return m ? m[1] : '';
+}
+
+function normalizeHtmlText(text) {
+  return String(text || '')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&amp;/gi, '&')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2B;/gi, '+')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function firstMatch(text, patterns) {
+  for (var i = 0; i < patterns.length; i++) {
+    var m = text.match(patterns[i]);
+    if (m && m[1]) return m;
+  }
+  return null;
+}
+
+function parseUnit(rawUnit, kind) {
+  var u = String(rawUnit || '').toLowerCase();
+
+  if (u === '"' || u.indexOf('inch') >= 0 || u === 'in') return 'in';
+  if (u === "'" || u.indexOf('feet') >= 0 || u.indexOf('foot') >= 0 || u === 'ft') return 'ft';
+  if (u.indexOf('yard') >= 0 || u === 'yd') return 'yd';
+  if (u.indexOf('centimeter') >= 0 || u === 'cm') return 'cm';
+  if (u.indexOf('meter') >= 0 || u === 'm') return 'm';
+
+  return kind === 'length' ? 'ft' : 'in';
+}
+
+function findMeasurement(text, labelPatterns, unitPatterns, kind) {
+  for (var i = 0; i < labelPatterns.length; i++) {
+    var label = labelPatterns[i];
+
+    for (var j = 0; j < unitPatterns.length; j++) {
+      var unit = unitPatterns[j];
+
+      var re1 = new RegExp(
+        '(?:' + label + ')[^0-9]{0,80}([0-9]+(?:\\.[0-9]+)?)\\s*(' + unit + ')',
+        'i'
+      );
+
+      var m1 = text.match(re1);
+      if (m1) {
+        return {
+          value: parseFloat(m1[1]),
+          unit: parseUnit(m1[2], kind),
+          raw: m1[0]
+        };
+      }
+
+      var re2 = new RegExp(
+        '([0-9]+(?:\\.[0-9]+)?)\\s*(' + unit + ')[^A-Za-z0-9]{0,30}(?:' + label + ')',
+        'i'
+      );
+
+      var m2 = text.match(re2);
+      if (m2) {
+        return {
+          value: parseFloat(m2[1]),
+          unit: parseUnit(m2[2], kind),
+          raw: m2[0]
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function parseYorkProduct(html) {
+  var meta = normalizeHtmlText(extractMetaDescription(html));
+  var text = normalizeHtmlText(html);
+  var combined = meta + ' ' + text;
+
+  var width = null;
+  var length = null;
+  var repeat = null;
+
+  // York commonly states dimensions like:
+  // "measures approximately 27 inches wide by 27 feet long"
+  var yorkDim = combined.match(
+    /([0-9]+(?:\.[0-9]+)?)\s*(inches?|inch|in|")\s*wide\s*by\s*([0-9]+(?:\.[0-9]+)?)\s*(feet|foot|ft|'|yards?|yd|meters?|m)\s*long/i
+  );
+
+  if (yorkDim) {
+    width = {
+      value: parseFloat(yorkDim[1]),
+      unit: parseUnit(yorkDim[2], 'width'),
+      raw: yorkDim[0]
+    };
+
+    length = {
+      value: parseFloat(yorkDim[3]),
+      unit: parseUnit(yorkDim[4], 'length'),
+      raw: yorkDim[0]
+    };
+  }
+
+  if (!width) {
+    width = findMeasurement(
+      combined,
+      ['roll\\s*width', 'bolt\\s*width', 'width'],
+      ['inches?', 'inch', 'in', '"', 'centimeters?', 'cm'],
+      'width'
+    );
+  }
+
+  if (!length) {
+    length = findMeasurement(
+      combined,
+      ['roll\\s*length', 'bolt\\s*length', 'length'],
+      ['feet', 'foot', 'ft', "'", 'yards?', 'yd', 'meters?', 'm'],
+      'length'
+    );
+  }
+
+  repeat = findMeasurement(
+    combined,
+    ['vertical\\s*repeat', 'pattern\\s*repeat', 'repeat'],
+    ['inches?', 'inch', 'in', '"', 'centimeters?', 'cm'],
+    'repeat'
+  );
+
+  var lower = combined.toLowerCase();
+  var matchType = null;
+
+  if (lower.indexOf('half drop') >= 0 || lower.indexOf('half-drop') >= 0) {
+    matchType = 'halfdrop';
+  } else if (lower.indexOf('straight match') >= 0 || lower.indexOf('straight-match') >= 0) {
+    matchType = 'straight';
+  }
+
+  return {
+    width: width,
+    length: length,
+    repeat: repeat,
+    matchType: matchType,
+    metaDescription: meta
+  };
+}
+
+function setSelectValue(selectId, value) {
+  var select = document.getElementById(selectId);
+  if (!select || !value) return false;
+
+  var exists = Array.from(select.options).some(function(option) {
+    return option.value === value;
+  });
+
+  if (!exists) return false;
+
+  select.value = value;
+  select.dataset.prev = value;
+  return true;
+}
+
+async function loadWallpaperProduct() {
+  var errorEl = document.getElementById('productError');
+  var statusEl = document.getElementById('productStatus');
+  var button = document.getElementById('loadProductBtn');
+  var productUrl = document.getElementById('productUrl').value.trim();
+
+  errorEl.textContent = '';
+  statusEl.textContent = '';
+
+  if (!productUrl) {
+    errorEl.textContent = 'Вставте посилання на шпалери.';
+    return;
+  }
+
+  if (!/^https?:\/\//i.test(productUrl)) {
+    errorEl.textContent = 'Посилання має починатися з http:// або https://';
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = 'Завантаження...';
+
+  try {
+    var requestUrl = N8N_WEBHOOK + '?url=' + encodeURIComponent(productUrl);
+    var response = await fetch(requestUrl);
+
+    if (!response.ok) {
+      var errorData = null;
+      try {
+        errorData = await response.json();
+      } catch (ignore) {}
+
+      throw new Error(
+        errorData && (errorData.detail || errorData.error)
+          ? (errorData.detail || errorData.error)
+          : 'Помилка сервера: ' + response.status
+      );
+    }
+
+    var data = await response.json();
+
+    if (!data.html) {
+      throw new Error('Проксі не повернув HTML сторінки.');
+    }
+
+    var parsed = parseYorkProduct(data.html);
+    var found = [];
+
+    if (parsed.width && parsed.width.value > 0) {
+      document.getElementById('rollWidth').value = parsed.width.value;
+      setSelectValue('rollWidthUnit', parsed.width.unit);
+      found.push('ширина рулону: ' + parsed.width.value + ' ' + parsed.width.unit);
+    }
+
+    if (parsed.length && parsed.length.value > 0) {
+      document.getElementById('rollLength').value = parsed.length.value;
+      setSelectValue('rollLengthUnit', parsed.length.unit);
+      found.push('довжина рулону: ' + parsed.length.value + ' ' + parsed.length.unit);
+    }
+
+    if (parsed.repeat && parsed.repeat.value >= 0) {
+      document.getElementById('repeat').value = parsed.repeat.value;
+      setSelectValue('repeatUnit', parsed.repeat.unit);
+      found.push('раппорт: ' + parsed.repeat.value + ' ' + parsed.repeat.unit);
+    }
+
+    if (parsed.matchType === 'straight') {
+      setRepeatType('straight');
+      found.push('тип: Straight Match');
+    } else if (parsed.matchType === 'halfdrop') {
+      setRepeatType('halfdrop');
+      found.push('тип: Half Drop');
+    }
+
+    if (!found.length) {
+      throw new Error(
+        'Сторінка завантажилась, але не вдалося автоматично знайти параметри рулону.'
+      );
+    }
+
+    statusEl.textContent = 'Знайдено: ' + found.join(' · ');
+
+  } catch (error) {
+    console.error(error);
+    errorEl.textContent = error.message || 'Не вдалося завантажити параметри.';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Отримати параметри';
+  }
+}
+
 
 function toIn(v, unit) {
   if (unit==='in') return v;
