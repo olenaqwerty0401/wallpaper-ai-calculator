@@ -618,19 +618,38 @@ function parseYorkProduct(html) {
     'repeat'
   );
 
-  var lower = combined.toLowerCase();
-var matchType = null;
+  var matchType = null;
 
-var matchSpec = combined.match(/Match\s+(Drop|Straight|Half Drop)/i);
+  // York stores specifications in HTML table rows such as:
+  // <td class=spec-name>Match<td class=spec-value>Drop
+  var matchSpec = html.match(
+    /<td[^>]*class=["']?spec-name["']?[^>]*>\s*Match\s*<td[^>]*class=["']?spec-value["']?[^>]*>\s*([^<]+)/i
+  );
 
-if (matchSpec) {
-  var matchValue = matchSpec[1].toLowerCase();
+  if (matchSpec && matchSpec[1]) {
+    var matchValue = matchSpec[1].trim().toLowerCase();
 
-  if (matchValue === 'drop' || matchValue === 'half drop') {
-    matchType = 'halfdrop';
-  } else if (matchValue === 'straight') {
-    matchType = 'straight';
+    if (
+      matchValue === 'drop' ||
+      matchValue === 'half drop' ||
+      matchValue === 'half-drop'
+    ) {
+      matchType = 'halfdrop';
+    } else if (
+      matchValue === 'straight' ||
+      matchValue === 'straight match'
+    ) {
+      matchType = 'straight';
+    }
   }
+
+  return {
+    width: width,
+    length: length,
+    repeat: repeat,
+    matchType: matchType,
+    metaDescription: meta
+  };
 }
 
 function setSelectValue(selectId, value) {
