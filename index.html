@@ -619,21 +619,18 @@ function parseYorkProduct(html) {
   );
 
   var lower = combined.toLowerCase();
-  var matchType = null;
+var matchType = null;
 
-  if (lower.indexOf('half drop') >= 0 || lower.indexOf('half-drop') >= 0) {
+var matchSpec = combined.match(/Match\s+(Drop|Straight|Half Drop)/i);
+
+if (matchSpec) {
+  var matchValue = matchSpec[1].toLowerCase();
+
+  if (matchValue === 'drop' || matchValue === 'half drop') {
     matchType = 'halfdrop';
-  } else if (lower.indexOf('straight match') >= 0 || lower.indexOf('straight-match') >= 0) {
+  } else if (matchValue === 'straight') {
     matchType = 'straight';
   }
-
-  return {
-    width: width,
-    length: length,
-    repeat: repeat,
-    matchType: matchType,
-    metaDescription: meta
-  };
 }
 
 function setSelectValue(selectId, value) {
